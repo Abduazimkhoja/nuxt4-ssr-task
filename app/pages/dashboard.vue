@@ -4,9 +4,7 @@ import { useAuthStore } from "~/stores/auth";
 const authStore = useAuthStore();
 const { user } = storeToRefs(authStore);
 
-definePageMeta({
-  layout: "dashboard",
-});
+definePageMeta({ middleware: "auth", layout: "dashboard" });
 </script>
 
 <template>

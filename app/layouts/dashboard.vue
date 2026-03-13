@@ -1,48 +1,51 @@
 <script setup lang="ts">
 import type { NavigationMenuItem } from "@nuxt/ui";
 
-const items: NavigationMenuItem[] = [
+const auth = useAuthStore();
+
+const allItems = [
   {
-    // ADMIN, MANAGER, USER
     label: "Home",
     icon: "i-lucide-house",
     to: "/dashboard",
+    roles: ["admin", "manager", "user"],
   },
   {
-    // ADMIN, MANAGER, USER
     label: "Inbox",
     icon: "i-lucide-inbox",
     badge: "4",
     to: "/inbox",
+    roles: ["admin", "manager", "user"],
   },
   {
-    // MANAGER
     label: "Contacts",
     icon: "i-lucide-users",
     to: "/contacts",
+    roles: ["admin", "manager"],
   },
   {
-    // ADMIN, MANAGER, USER
     label: "Settings",
     icon: "i-lucide-settings",
     defaultOpen: true,
+    roles: ["admin", "manager", "user"],
     children: [
-      {
-        label: "General",
-        to: "/settings",
-      },
-      {
-        // ADMIN
-        label: "Members",
-        to: "/settings/members",
-      },
-      {
-        label: "Notifications",
-        to: "/settings/notifications",
-      },
+      { label: "General", to: "/settings", roles: ["admin", "manager", "user"] },
+      { label: "Members", to: "/settings/members", roles: ["admin"] },
+      { label: "Notifications", to: "/settings/notifications", roles: ["admin", "manager", "user"] },
     ],
   },
 ];
+
+const items = computed<NavigationMenuItem[]>(() => {
+  const role = auth.role;
+  if (!role) return [];
+  return allItems
+    .filter((item) => item.roles.includes(role))
+    .map((item) => ({
+      ...item,
+      children: item.children?.filter((c) => c.roles.includes(role)),
+    }));
+});
 </script>
 
 <template>
@@ -65,7 +68,7 @@ const items: NavigationMenuItem[] = [
       </template>
 
       <template #footer>
-        <UButton class="w-full justify-center" color="error" to="/">
+        <UButton class="w-full justify-center" color="error" @click="auth.logout()">
           Logout
         </UButton>
       </template>
@@ -75,4 +78,4 @@ const items: NavigationMenuItem[] = [
       <slot />
     </div>
   </UDashboardGroup>
-</template>
+</template>	

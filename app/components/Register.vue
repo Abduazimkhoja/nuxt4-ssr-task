@@ -2,6 +2,7 @@
 import type { AuthFormField, FormSubmitEvent } from "@nuxt/ui";
 import * as z from "zod";
 
+const auth = useAuthStore();
 const router = useRouter();
 const toast = useToast();
 
@@ -32,33 +33,32 @@ const fields = ref<AuthFormField[]>([
   },
 ]);
 
-const schema = z.object();
+const schema = z
+  .object({
+    name: z.string().min(2, "Name must be at least 2 characters"),
+    email: z.string().email("Invalid email"),
+    password: z.string().min(6, "Password must be at least 6 characters"),
+    confirmPassword: z.string(),
+  })
+  .refine((data) => data.password === data.confirmPassword, {
+    message: "Passwords don't match",
+    path: ["confirmPassword"],
+  });
 
 type Schema = z.output<typeof schema>;
 
 async function onSubmit(payload: FormSubmitEvent<Schema>) {
-  // try {
-  //   if (result.success) {
-  //     toast.add({
-  //       title: "Success",
-  //       description: "Registration successful! Welcome!",
-  //       color: "success",
-  //     });
-  //     router.push("/dashboard");
-  //   } else {
-  //     toast.add({
-  //       title: "Registration Failed",
-  //       description: result.error || "Registration failed",
-  //       color: "error",
-  //     });
-  //   }
-  // } catch (error) {
-  //   toast.add({
-  //     title: "Error",
-  //     description: "An unexpected error occurred",
-  //     color: "error",
-  //   });
-  // }
+  try {
+    await auth.register({ name: payload.data.name, email: payload.data.email, password: payload.data.password });
+    toast.add({ title: "Success", description: "Registration successful!", color: "success" });
+    router.push("/dashboard");
+  } catch (error: any) {
+    toast.add({
+      title: "Registration Failed",
+      description: error.data?.statusMessage || "Registration failed",
+      color: "error",
+    });
+  }
 }
 </script>
 

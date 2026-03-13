@@ -1,15 +1,15 @@
-import { 
-  findUserByEmail, 
+import {
+  findUserByEmail,
   createUser,
-  generateAccessToken, 
-  generateRefreshToken, 
-  storeRefreshToken 
+  generateAccessToken,
+  generateRefreshToken,
+  storeRefreshToken
 } from '../../utils/jwt'
 
 export default defineEventHandler(async (event) => {
   try {
     const body = await readBody(event)
-    
+
     // Validate input
     if (!body.email || !body.password || !body.name) {
       throw createError({
@@ -29,7 +29,7 @@ export default defineEventHandler(async (event) => {
 
     // Default role is 'user' if not specified
     const role = body.role || 'user'
-    
+
     // Validate role
     const validRoles = ['admin', 'manager', 'user', 'guest']
     if (!validRoles.includes(role)) {
@@ -50,7 +50,10 @@ export default defineEventHandler(async (event) => {
     // Generate tokens
     const accessToken = generateAccessToken(newUser)
     const refreshToken = generateRefreshToken(newUser.id)
-    
+
+    setCookie(event, 'access_token', accessToken, { httpOnly: true, maxAge: 60 })
+    setCookie(event, 'refresh_token', refreshToken, { httpOnly: true, maxAge: 60 * 5 })
+
     // Store refresh token
     storeRefreshToken(refreshToken, newUser.id)
 
@@ -63,7 +66,7 @@ export default defineEventHandler(async (event) => {
     if (error.statusCode) {
       throw error
     }
-    
+
     throw createError({
       statusCode: 500,
       statusMessage: 'Internal server error'

@@ -1,4 +1,4 @@
-import { 
+import {
   validateRefreshToken,
   findUserById,
   generateAccessToken
@@ -7,7 +7,7 @@ import {
 export default defineEventHandler(async (event) => {
   try {
     const body = await readBody(event)
-    
+
     // Validate input
     if (!body.refreshToken) {
       throw createError({
@@ -37,6 +37,8 @@ export default defineEventHandler(async (event) => {
     // Generate new access token
     const accessToken = generateAccessToken(user)
 
+    setCookie(event, 'access_token', accessToken, { httpOnly: true, maxAge: 60 })
+
     return {
       accessToken
     }
@@ -44,7 +46,7 @@ export default defineEventHandler(async (event) => {
     if (error.statusCode) {
       throw error
     }
-    
+
     throw createError({
       statusCode: 500,
       statusMessage: 'Internal server error'

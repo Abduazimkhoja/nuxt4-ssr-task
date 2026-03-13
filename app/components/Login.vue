@@ -2,6 +2,7 @@
 import type { AuthFormField, FormSubmitEvent } from "@nuxt/ui";
 import * as z from "zod";
 
+const auth = useAuthStore();
 const router = useRouter();
 const toast = useToast();
 
@@ -20,34 +21,25 @@ const fields = ref<AuthFormField[]>([
   },
 ]);
 
-const schema = z.object();
+const schema = z.object({
+  email: z.string().email("Invalid email"),
+  password: z.string().min(1, "Password is required"),
+});
 
 type Schema = z.output<typeof schema>;
 
 async function onSubmit(payload: FormSubmitEvent<Schema>) {
-  router.push('/dashboard');
-  // try {
-  //   if (result.success) {
-  //     toast.add({
-  //       title: "Success",
-  //       description: "Login successful!",
-  //       color: "success",
-  //     });
-  //     router.push("/dashboard");
-  //   } else {
-  //     toast.add({
-  //       title: "Login Failed",
-  //       description: result.error || "Invalid credentials",
-  //       color: "error",
-  //     });
-  //   }
-  // } catch (error) {
-  //   toast.add({
-  //     title: "Error",
-  //     description: "An unexpected error occurred",
-  //     color: "error",
-  //   });
-  // }
+  try {
+    await auth.login({ email: payload.data.email, password: payload.data.password });
+    toast.add({ title: "Success", description: "Login successful!", color: "success" });
+    router.push("/dashboard");
+  } catch (error: any) {
+    toast.add({
+      title: "Login Failed",
+      description: error.data?.statusMessage || "Invalid credentials",
+      color: "error",
+    });
+  }
 }
 </script>
 

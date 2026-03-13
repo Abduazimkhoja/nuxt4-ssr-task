@@ -1,14 +1,14 @@
-import { 
-  findUserByEmail, 
-  generateAccessToken, 
-  generateRefreshToken, 
-  storeRefreshToken 
+import {
+  findUserByEmail,
+  generateAccessToken,
+  generateRefreshToken,
+  storeRefreshToken
 } from '../../utils/jwt'
 
 export default defineEventHandler(async (event) => {
   try {
     const body = await readBody(event)
-    
+
     // Validate input
     if (!body.email || !body.password) {
       throw createError({
@@ -41,10 +41,13 @@ export default defineEventHandler(async (event) => {
       email: user.email,
       role: user.role
     }
-    
+
     const accessToken = generateAccessToken(userInfo)
     const refreshToken = generateRefreshToken(user.id)
-    
+
+    setCookie(event, 'access_token', accessToken, { httpOnly: true, maxAge: 60 })
+    setCookie(event, 'refresh_token', refreshToken, { httpOnly: true, maxAge: 60 * 5 })
+
     // Store refresh token
     storeRefreshToken(refreshToken, user.id)
 
@@ -57,7 +60,7 @@ export default defineEventHandler(async (event) => {
     if (error.statusCode) {
       throw error
     }
-    
+
     throw createError({
       statusCode: 500,
       statusMessage: 'Internal server error'
